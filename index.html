@@ -186,7 +186,13 @@
       .then(data => {
         if (data.length > 0) {
           map.setView([data[0].lat, data[0].lon], 15);
+        } else {
+          alert('No results found for: ' + query);
         }
+      })
+      .catch(err => {
+        console.error('Search error:', err);
+        alert('Search failed. Please try again.');
       });
     }
   }

@@ -264,7 +264,7 @@
     let places = JSON.parse(localStorage.getItem("places")) || [];
 
     places.forEach(p => {
-      L.marker([p.lat, p.lon])
+      L.marker([parseFloat(p.lat), parseFloat(p.lon)])
         .addTo(map)
         .bindPopup(p.name);
     });

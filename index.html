@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Map App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* 🔍 TOP SEARCH BAR */
+    .topbar {
+      position: absolute;
+      top: 15px;
+      left: 70px;
+      right: 20px;
+      background: white;
+      padding: 10px;
+      border-radius: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: flex;
+    }
+
+    .topbar input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      padding: 5px;
+    }
+
+    /* 📂 LEFT PANEL */
+    .sidebar {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      cursor: pointer;
+    }
+
+    .menu-panel {
+      position: absolute;
+      top: 80px;
+      left: 15px;
+      width: 300px;
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: none;
+    }
+
+    .menu-panel h3 {
+      margin: 0 0 10px;
+    }
+
+    /* 🧭 CATEGORY CHIPS */
+    .chips {
+      position: absolute;
+      top: 80px;
+      left: 80px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      z-index: 1000;
+    }
+
+    .chip {
+      background: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    /* 📍 FLOAT BUTTON */
+    .loc-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 12px;
+      border-radius: 50%;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<!-- MENU BUTTON -->
+<div class="sidebar" onclick="toggleMenu()">☰</div>
+
+<!-- LEFT PANEL -->
+<div class="menu-panel" id="menu">
+  <h3>My Places</h3>
+  <p>🏠 Home</p>
+  <p>💼 Work</p>
+</div>
+
+<!-- SEARCH BAR -->
+<div class="topbar">
+  <input id="search" placeholder="Search location..." onkeypress="handleEnter(event)">
+</div>
+
+<!-- CATEGORY CHIPS -->
+<div class="chips">
+  <div class="chip" onclick="getPlaces('restaurant')">🍽 Restaurants</div>
+  <div class="chip" onclick="getPlaces('hospital')">🏥 Hospitals</div>
+  <div class="chip" onclick="getPlaces('atm')">🏧 ATMs</div>
+  <div class="chip" onclick="getPlaces('hotel')">🏨 Hotels</div>
+</div>
+
+<!-- LOCATION BUTTON -->
+<div class="loc-btn" onclick="getCurrentLocation()">📍</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  var map = L.map('map');
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+  let userMarker, userCircle;
+
+  // 📍 AUTO LOAD LOCATION
+  navigator.geolocation.getCurrentPosition(pos => {
+    let lat = pos.coords.latitude;
+    let lon = pos.coords.longitude;
+
+    map.setView([lat, lon], 15);
+
+    userMarker = L.circleMarker([lat, lon], {
+      radius: 8,
+      color: "#fff",
+      weight: 2,
+      fillColor: "#1E90FF",
+      fillOpacity: 1
+    }).addTo(map);
+
+    userCircle = L.circle([lat, lon], {
+      radius: 50,
+      fillColor: "#1E90FF",
+      fillOpacity: 0.2,
+      stroke: false
+    }).addTo(map);
+  });
+
+  // 🔍 SEARCH
+  function handleEnter(e) {
+    if (e.key === "Enter") {
+      let query = document.getElementById("search").value;
+
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.length > 0) {
+          map.setView([data[0].lat, data[0].lon], 15);
+        }
+      });
+    }
+  }
+
+  // 🍽️ PLACES
+  function getPlaces(type) {
+    let bounds = map.getBounds();
+
+    let query = `
+      [out:json];
+      node["amenity"="${type}"]
+      (${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      out;
+    `;
+
+    fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: query
+    })
+    .then(res => res.json())
+    .then(data => {
+      data.elements.forEach(place => {
+        L.marker([place.lat, place.lon])
+          .addTo(map)
+          .bindPopup(place.tags.name || type);
+      });
+    });
+  }
+
+  // 📍 BUTTON LOCATION
+  function getCurrentLocation() {
+    navigator.geolocation.getCurrentPosition(pos => {
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+      map.setView([lat, lon], 15);
+    });
+  }
+
+  // 📂 MENU
+  function toggleMenu() {
+    let menu = document.getElementById("menu");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  }
+</script>
+
+</body>
+</html>

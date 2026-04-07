@@ -170,6 +170,10 @@
       fillOpacity: 0.2,
       stroke: false
     }).addTo(map);
+  }, err => {
+    console.error('Geolocation error:', err);
+    // Default to a central location, e.g., New York
+    map.setView([40.7128, -74.0060], 10);
   });
 
   // 🔍 SEARCH

@@ -9,12 +9,9 @@
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
 
-    #map {
-      height: 100vh;
-      width: 100%;
-    }
+    #map { height: 100vh; width: 100%; }
 
-    /* 🔍 TOP SEARCH BAR */
+    /* 🔍 TOP SEARCH */
     .topbar {
       position: absolute;
       top: 15px;
@@ -33,11 +30,10 @@
       border: none;
       outline: none;
       font-size: 14px;
-      padding: 5px;
     }
 
-    /* 📂 LEFT PANEL */
-    .sidebar {
+    /* ☰ MENU BUTTON */
+    .menu-btn {
       position: absolute;
       top: 15px;
       left: 15px;
@@ -53,11 +49,12 @@
       cursor: pointer;
     }
 
+    /* 📂 MENU PANEL */
     .menu-panel {
       position: absolute;
       top: 80px;
       left: 15px;
-      width: 300px;
+      width: 280px;
       background: white;
       border-radius: 12px;
       padding: 15px;
@@ -66,8 +63,15 @@
       display: none;
     }
 
-    .menu-panel h3 {
-      margin: 0 0 10px;
+    .menu-panel button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      background: #4285F4;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
     }
 
     /* 🧭 CATEGORY CHIPS */
@@ -92,7 +96,7 @@
       font-size: 14px;
     }
 
-    /* 📍 FLOAT BUTTON */
+    /* 📍 LOCATION BUTTON */
     .loc-btn {
       position: absolute;
       bottom: 20px;
@@ -112,22 +116,20 @@
 
 <div id="map"></div>
 
-<!-- MENU BUTTON -->
-<div class="sidebar" onclick="toggleMenu()">☰</div>
+<!-- ☰ MENU -->
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
 
-<!-- LEFT PANEL -->
 <div class="menu-panel" id="menu">
-  <h3>My Places</h3>
-  <p>🏠 Home</p>
-  <p>💼 Work</p>
+  <h3>Menu</h3>
+  <button onclick="goToAdmin()">Admin Panel</button>
 </div>
 
-<!-- SEARCH BAR -->
+<!-- 🔍 SEARCH -->
 <div class="topbar">
   <input id="search" placeholder="Search location..." onkeypress="handleEnter(event)">
 </div>
 
-<!-- CATEGORY CHIPS -->
+<!-- 🧭 CATEGORY -->
 <div class="chips">
   <div class="chip" onclick="getPlaces('restaurant')">🍽 Restaurants</div>
   <div class="chip" onclick="getPlaces('hospital')">🏥 Hospitals</div>
@@ -135,7 +137,7 @@
   <div class="chip" onclick="getPlaces('hotel')">🏨 Hotels</div>
 </div>
 
-<!-- LOCATION BUTTON -->
+<!-- 📍 LOCATION -->
 <div class="loc-btn" onclick="getCurrentLocation()">📍</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -147,7 +149,7 @@
 
   let userMarker, userCircle;
 
-  // 📍 AUTO LOAD LOCATION
+  // 🚀 AUTO LOCATION
   navigator.geolocation.getCurrentPosition(pos => {
     let lat = pos.coords.latitude;
     let lon = pos.coords.longitude;
@@ -185,13 +187,22 @@
     }
   }
 
-  // 🍽️ PLACES
+  // 🍽️ CATEGORY PLACES
   function getPlaces(type) {
     let bounds = map.getBounds();
 
+    let key, value;
+    if (type === 'hotel') {
+      key = 'tourism';
+      value = 'hotel';
+    } else {
+      key = 'amenity';
+      value = type;
+    }
+
     let query = `
       [out:json];
-      node["amenity"="${type}"]
+      node["${key}"="${value}"]
       (${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
       out;
     `;
@@ -215,15 +226,34 @@
     navigator.geolocation.getCurrentPosition(pos => {
       let lat = pos.coords.latitude;
       let lon = pos.coords.longitude;
+
       map.setView([lat, lon], 15);
     });
   }
 
-  // 📂 MENU
+  // 📂 MENU TOGGLE
   function toggleMenu() {
     let menu = document.getElementById("menu");
     menu.style.display = menu.style.display === "block" ? "none" : "block";
   }
+
+  // 🔐 ADMIN PAGE LINK
+  function goToAdmin() {
+    window.location.href = "admin.html";
+  }
+
+  // 📦 LOAD ADMIN DATA
+  function loadSavedPlaces() {
+    let places = JSON.parse(localStorage.getItem("places")) || [];
+
+    places.forEach(p => {
+      L.marker([p.lat, p.lon])
+        .addTo(map)
+        .bindPopup(p.name);
+    });
+  }
+
+  loadSavedPlaces();
 </script>
 
 </body>

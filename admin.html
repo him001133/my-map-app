@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .box {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      background: #4285F4;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Admin Panel</h2>
+
+  <input id="name" placeholder="Place name">
+  <input id="lat" placeholder="Latitude">
+  <input id="lon" placeholder="Longitude">
+
+  <button onclick="savePlace()">Save Place</button>
+</div>
+
+<script>
+  function savePlace() {
+    let place = {
+      name: document.getElementById("name").value,
+      lat: document.getElementById("lat").value,
+      lon: document.getElementById("lon").value
+    };
+
+    let places = JSON.parse(localStorage.getItem("places")) || [];
+    places.push(place);
+
+    localStorage.setItem("places", JSON.stringify(places));
+
+    alert("Place Saved!");
+  }
+</script>
+
+</body>
+</html>

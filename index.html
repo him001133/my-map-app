@@ -232,6 +232,9 @@
       let lon = pos.coords.longitude;
 
       map.setView([lat, lon], 15);
+    }, err => {
+      console.error('Geolocation error:', err);
+      alert('Unable to get your location. Please check permissions.');
     });
   }
 

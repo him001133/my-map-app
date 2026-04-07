@@ -228,6 +228,10 @@
           .addTo(map)
           .bindPopup(place.tags.name || type);
       });
+    })
+    .catch(err => {
+      console.error('Places fetch error:', err);
+      alert('Failed to load places. Please try again.');
     });
   }
 
